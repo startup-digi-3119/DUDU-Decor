@@ -1,26 +1,23 @@
 import { useEffect, useState } from 'react'
-import type { Session } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import { onAuthStateChanged, User } from 'firebase/auth'
+import { auth } from '../lib/firebase'
 
 export function useAuth() {
-    const [session, setSession] = useState<Session | null>(null)
+    const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session)
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser)
             setLoading(false)
         })
 
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session)
-            setLoading(false)
-        })
-
-        return () => subscription.unsubscribe()
+        return () => unsubscribe()
     }, [])
 
-    return { session, loading }
+    // Mapping Firebase user to a structure similar to our previous 'session' if needed
+    // For simplicity, we just return the user object, but we keep the key 'session' 
+    // to minimize refactoring in other components that might check 'session' existence.
+    // Ideally, other components should be updated to expect 'user'.
+    return { session: user, loading, user }
 }

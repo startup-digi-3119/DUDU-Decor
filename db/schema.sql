@@ -1,9 +1,9 @@
--- Enable UUID extension
-create extension if not exists "uuid-ossp";
+-- Enable pgcrypto (optional, often needed for gen_random_uuid in older PG, but Neon is PG15+)
+create extension if not exists "pgcrypto";
 
 -- Projects Table
-create table projects (
-  id uuid default uuid_generate_v4() primary key,
+create table if not exists projects (
+  id uuid default gen_random_uuid() primary key,
   title text not null,
   category text not null, -- 'Wedding', 'Corporate', 'Private'
   image_url text not null,
@@ -12,8 +12,8 @@ create table projects (
 );
 
 -- Team Members Table
-create table team_members (
-  id uuid default uuid_generate_v4() primary key,
+create table if not exists team_members (
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   role text not null,
   bio text,
@@ -23,8 +23,8 @@ create table team_members (
 );
 
 -- Contact Messages Table
-create table messages (
-  id uuid default uuid_generate_v4() primary key,
+create table if not exists messages (
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   email text not null,
   phone text,
@@ -34,11 +34,11 @@ create table messages (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Site Configuration Table (About page text, etc.)
-create table site_config (
-  id uuid default uuid_generate_v4() primary key,
+-- Site Configuration Table
+create table if not exists site_config (
+  id uuid default gen_random_uuid() primary key,
   key text unique not null,
-  value text, -- JSON or text content
+  value text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -48,19 +48,11 @@ alter table team_members enable row level security;
 alter table messages enable row level security;
 alter table site_config enable row level security;
 
--- Policies
+-- Policies (Simplified for vanilla DB usage without auth middleware context)
+-- In a real app, you'd use a backend to enforce these, or set_config variables.
+-- For now, we allow read/write assuming the connection owner manages access.
 
--- Public Read Access
-create policy "Public projects are viewable by everyone" on projects for select using (true);
-create policy "Public team members are viewable by everyone" on team_members for select using (true);
-create policy "Public site config is viewable by everyone" on site_config for select using (true);
-
--- Admin Full Access (Assuming Supabase Auth is strictly for Admin in this scenario, or check role)
--- For simplicity, we assume authenticated users are admins (since registration is restricted or manual)
-create policy "Admins can do everything on projects" on projects for all using (auth.role() = 'authenticated');
-create policy "Admins can do everything on team members" on team_members for all using (auth.role() = 'authenticated');
-create policy "Admins can do everything on site config" on site_config for all using (auth.role() = 'authenticated');
-create policy "Admins can view and edit messages" on messages for all using (auth.role() = 'authenticated');
-
--- Contact Form Submission (Anon Insert)
-create policy "Anyone can insert messages" on messages for insert with check (true);
+create policy "Public Access" on projects for all using (true);
+create policy "Public Access" on team_members for all using (true);
+create policy "Public Access" on site_config for all using (true);
+create policy "Public Access" on messages for all using (true);

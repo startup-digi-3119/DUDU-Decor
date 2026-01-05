@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import { apiClient } from '../../lib/api'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/Card'
+import { storage } from '../../lib/firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 export default function GalleryAdmin() {
     const [projects, setProjects] = useState<any[]>([])
@@ -16,21 +18,25 @@ export default function GalleryAdmin() {
     }, [])
 
     const fetchProjects = async () => {
-        const { data } = await supabase.from('projects').select('*').order('created_at', { ascending: false })
-        if (data) setProjects(data)
-        setLoading(false)
+        try {
+            const data = await apiClient('/projects')
+            setProjects(data)
+        } catch (error) {
+            console.error('Failed to fetch projects:', error)
+        } finally {
+            setLoading(false)
+        }
     }
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure?')) return
-
-        // 1. Delete image from storage (optional, assumes path Logic)
-        // const path = imageUrl.split('/').pop()
-        // if (path) await supabase.storage.from('images').remove([path])
-
-        // 2. Delete row
-        const { error } = await supabase.from('projects').delete().eq('id', id)
-        if (!error) fetchProjects()
+        try {
+            await apiClient(`/projects?id=${id}`, { method: 'DELETE' })
+            fetchProjects()
+        } catch (error) {
+            console.error('Failed to delete project:', error)
+            alert('Failed to delete project')
+        }
     }
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,32 +48,30 @@ export default function GalleryAdmin() {
 
             const file = e.target.files[0]
             const fileExt = file.name.split('.').pop()
-            const fileName = `${Math.random()}.${fileExt}`
-            const filePath = `${fileName}`
+            const fileName = `${Date.now()}.${fileExt}`
+            const storageRef = ref(storage, `projects/${fileName}`)
 
-            const { error: uploadError } = await supabase.storage
-                .from('images')
-                .upload(filePath, file)
+            // Upload to Firebase Storage
+            const snapshot = await uploadBytes(storageRef, file)
+            const downloadURL = await getDownloadURL(snapshot.ref)
 
-            if (uploadError) {
-                throw uploadError
-            }
-
-            const { data } = supabase.storage.from('images').getPublicUrl(filePath)
-
-            // Insert into DB
-            const { error: dbError } = await supabase.from('projects').insert([{
-                title: newProject.title || 'New Project',
-                category: newProject.category,
-                description: newProject.description,
-                image_url: data.publicUrl
-            }])
-
-            if (dbError) throw dbError
+            // Save to Database via API
+            await apiClient('/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: newProject.title || 'New Project',
+                    category: newProject.category,
+                    description: newProject.description,
+                    image_url: downloadURL
+                })
+            })
 
             alert('Project added!')
+            setNewProject({ title: '', category: 'Wedding', description: '' })
             fetchProjects()
         } catch (error: any) {
+            console.error(error)
             alert(error.message)
         } finally {
             setUploading(false)

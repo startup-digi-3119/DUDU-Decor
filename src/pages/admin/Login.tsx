@@ -3,19 +3,29 @@ import { Button } from "../../components/ui/Button"
 import { Input } from "../../components/ui/Input"
 import { Card, CardContent } from "../../components/ui/Card"
 import { useNavigate } from 'react-router-dom'
+import { auth } from '../../lib/firebase'
+import { signInWithEmailAndPassword } from 'firebase/auth'
 
 export default function Login() {
     const [loading, setLoading] = useState(false)
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState<string | null>(null)
     const navigate = useNavigate()
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
-        // Simulate login
-        setTimeout(() => {
-            setLoading(false)
+        setError(null)
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password)
             navigate('/admin/dashboard')
-        }, 1000)
+        } catch (err: any) {
+            console.error(err)
+            setError("Failed to sign in. Please check your email and password.")
+            setLoading(false)
+        }
     }
 
     return (
@@ -28,14 +38,28 @@ export default function Login() {
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-4">
+                        {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
+
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Email</label>
-                            <Input type="email" placeholder="admin@dududecors.com" required />
+                            <Input
+                                type="email"
+                                placeholder="admin@dududecors.com"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
                         </div>
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Password</label>
-                            <Input type="password" placeholder="••••••••" required />
+                            <Input
+                                type="password"
+                                placeholder="••••••••"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
                         </div>
 
                         <div className="flex items-center justify-between text-sm">

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import { apiClient } from '../../lib/api'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Plus, Trash2 } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/Card'
+import { storage } from '../../lib/firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 export default function TeamAdmin() {
     const [members, setMembers] = useState<any[]>([])
@@ -16,15 +18,25 @@ export default function TeamAdmin() {
     }, [])
 
     const fetchMembers = async () => {
-        const { data } = await supabase.from('team_members').select('*').order('created_at', { ascending: false })
-        if (data) setMembers(data)
-        setLoading(false)
+        try {
+            const data = await apiClient('/team')
+            setMembers(data)
+        } catch (error) {
+            console.error('Failed to fetch members:', error)
+        } finally {
+            setLoading(false)
+        }
     }
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure?')) return
-        const { error } = await supabase.from('team_members').delete().eq('id', id)
-        if (!error) fetchMembers()
+        try {
+            await apiClient(`/team?id=${id}`, { method: 'DELETE' })
+            fetchMembers()
+        } catch (error) {
+            console.error('Failed to delete member:', error)
+            alert('Failed to delete member')
+        }
     }
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,27 +48,27 @@ export default function TeamAdmin() {
 
             const file = e.target.files[0]
             const fileExt = file.name.split('.').pop()
-            const fileName = `${Math.random()}.${fileExt}`
-            const filePath = `team/${fileName}`
+            const fileName = `${Date.now()}.${fileExt}`
+            const storageRef = ref(storage, `team/${fileName}`)
 
-            const { error: uploadError } = await supabase.storage
-                .from('images')
-                .upload(filePath, file)
+            // Upload
+            const snapshot = await uploadBytes(storageRef, file)
+            const downloadURL = await getDownloadURL(snapshot.ref)
 
-            if (uploadError) throw uploadError
-
-            const { data } = supabase.storage.from('images').getPublicUrl(filePath)
-
-            const { error: dbError } = await supabase.from('team_members').insert([{
-                name: newMember.name || 'New Member',
-                role: newMember.role || 'Team Member',
-                bio: newMember.bio,
-                image_url: data.publicUrl
-            }])
-
-            if (dbError) throw dbError
+            // Insert
+            await apiClient('/team', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: newMember.name || 'New Member',
+                    role: newMember.role || 'Team Member',
+                    bio: newMember.bio,
+                    image_url: downloadURL
+                })
+            })
 
             alert('Team member added!')
+            setNewMember({ name: '', role: '', bio: '' })
             fetchMembers()
         } catch (error: any) {
             alert(error.message)
@@ -115,7 +127,7 @@ export default function TeamAdmin() {
                                 <Button
                                     variant="destructive"
                                     size="icon"
-                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-600 hover:bg-red-700 text-white"
                                     onClick={() => handleDelete(member.id)}
                                 >
                                     <Trash2 className="h-4 w-4" />

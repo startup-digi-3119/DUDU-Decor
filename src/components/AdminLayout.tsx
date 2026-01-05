@@ -1,9 +1,13 @@
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { LayoutDashboard, Image, Users, FileText, MessageSquare, LogOut } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { useAuth } from '../hooks/useAuth'
+import { auth } from '../lib/firebase'
 
 export function AdminLayout() {
     const location = useLocation()
+    const navigate = useNavigate()
+    const { session: user, loading } = useAuth()
 
     const navItems = [
         { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
@@ -12,6 +16,23 @@ export function AdminLayout() {
         { name: 'Team', path: '/admin/team', icon: Users },
         { name: 'Messages', path: '/admin/messages', icon: MessageSquare },
     ]
+
+    const handleLogout = async () => {
+        try {
+            await auth.signOut()
+            navigate('/admin/login')
+        } catch (error) {
+            console.error('Error signing out:', error)
+        }
+    }
+
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    }
+
+    if (!user) {
+        return <Navigate to="/admin/login" replace />
+    }
 
     return (
         <div className="flex min-h-screen bg-gray-100">
@@ -40,7 +61,10 @@ export function AdminLayout() {
                 </nav>
 
                 <div className="p-4 border-t">
-                    <button className="flex items-center space-x-3 px-4 py-3 w-full rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-3 px-4 py-3 w-full rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                    >
                         <LogOut className="h-5 w-5" />
                         <span>Logout</span>
                     </button>

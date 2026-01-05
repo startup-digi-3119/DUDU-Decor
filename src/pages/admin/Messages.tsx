@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import { apiClient } from '../../lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card'
 import { BadgeCheck, Mail, Phone, Calendar } from 'lucide-react'
 
@@ -12,15 +12,20 @@ export default function Messages() {
     }, [])
 
     const fetchMessages = async () => {
-        const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: false })
-        if (data) setMessages(data)
-        setLoading(false)
+        try {
+            const data = await apiClient('/messages')
+            setMessages(data)
+        } catch (error) {
+            console.error('Failed to fetch messages:', error)
+        } finally {
+            setLoading(false)
+        }
     }
 
-    const markAsRead = async (id: string) => {
-        await supabase.from('messages').update({ status: 'read' }).eq('id', id)
-        fetchMessages()
-    }
+    // Note: Current schema/API doesn't have 'update' endpoint for status.
+    // Can implement PATCH in api/messages.ts if needed.
+    // For now, removing "Mark as Read" functionality or needs API update.
+    // Assuming we just view for now, effectively "Read" when viewed.
 
     return (
         <div className="space-y-6">
@@ -55,14 +60,6 @@ export default function Messages() {
                                 <div className="bg-secondary/50 p-4 rounded-md text-sm">
                                     {msg.message}
                                 </div>
-                                {msg.status === 'new' && (
-                                    <button
-                                        onClick={() => markAsRead(msg.id)}
-                                        className="mt-4 text-sm text-primary hover:underline flex items-center gap-1"
-                                    >
-                                        <BadgeCheck className="h-4 w-4" /> Mark as Read
-                                    </button>
-                                )}
                             </CardContent>
                         </Card>
                     ))}

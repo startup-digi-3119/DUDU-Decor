@@ -2,11 +2,34 @@ import { Button } from "../components/ui/Button"
 import { Input } from "../components/ui/Input"
 import { Card, CardContent } from "../components/ui/Card"
 import { Mail, Phone, MapPin, Clock } from "lucide-react"
+import { apiClient } from "../lib/api"
 
 export default function Contact() {
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        alert("Thank you for your message! We will get back to you soon.")
+        const form = e.target as HTMLFormElement
+        const formData = new FormData(form)
+
+        const messageData = {
+            name: formData.get('name') as string,
+            email: formData.get('email') as string,
+            phone: formData.get('phone') as string,
+            event_type: formData.get('type') as string,
+            message: formData.get('message') as string,
+        }
+
+        try {
+            await apiClient('/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(messageData)
+            })
+            alert("Thank you for your message! We will get back to you soon.")
+            form.reset()
+        } catch (error) {
+            console.error(error)
+            alert('Error sending message. Please try again.')
+        }
     }
 
     return (
@@ -91,23 +114,24 @@ export default function Contact() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label htmlFor="name" className="text-sm font-medium">Name</label>
-                                        <Input id="name" placeholder="Your Name" required />
+                                        <Input id="name" name="name" placeholder="Your Name" required />
                                     </div>
                                     <div className="space-y-2">
                                         <label htmlFor="email" className="text-sm font-medium">Email</label>
-                                        <Input id="email" type="email" placeholder="your@email.com" required />
+                                        <Input id="email" name="email" type="email" placeholder="your@email.com" required />
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
                                     <label htmlFor="phone" className="text-sm font-medium">Phone</label>
-                                    <Input id="phone" type="tel" placeholder="(123) 456-7890" />
+                                    <Input id="phone" name="phone" type="tel" placeholder="(123) 456-7890" />
                                 </div>
 
                                 <div className="space-y-2">
                                     <label htmlFor="type" className="text-sm font-medium">Event Type</label>
                                     <select
                                         id="type"
+                                        name="type"
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         <option>Wedding</option>
@@ -121,6 +145,7 @@ export default function Contact() {
                                     <label htmlFor="message" className="text-sm font-medium">Message</label>
                                     <textarea
                                         id="message"
+                                        name="message"
                                         className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         placeholder="Tell us about your event..."
                                         required
