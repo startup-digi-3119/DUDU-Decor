@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiClient } from '../../lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card'
-import { BadgeCheck, Mail, Phone, Calendar } from 'lucide-react'
+import { Mail, Phone, Calendar } from 'lucide-react'
 
 export default function Messages() {
     const [messages, setMessages] = useState<any[]>([])

@@ -1,15 +1,9 @@
 import * as React from "react"
 import { cn } from "../../lib/utils"
 
-// Since I didn't install radix-ui/react-slot, I will implement a basic version or install it.
-// Actually, standard shadcn implementation uses it for polymorphism (asChild).
-// For now, I'll stick to a standard button without Slot to avoid extra deps if not needed, 
-// OR I will install @radix-ui/react-slot if I want to be 100% compliant with standard patterns.
-// Let's implement a standard button first without Slot for simplicity unless needed.
-
 export interface ButtonProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'default' | 'outline' | 'ghost' | 'link'
+    variant?: 'default' | 'outline' | 'ghost' | 'link' | 'destructive'
     size?: 'default' | 'sm' | 'lg' | 'icon'
 }
 
@@ -24,6 +18,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                         "border border-input bg-background hover:bg-accent hover:text-accent-foreground": variant === "outline",
                         "hover:bg-accent hover:text-accent-foreground": variant === "ghost",
                         "text-primary underline-offset-4 hover:underline": variant === "link",
+                        "bg-red-600 text-white hover:bg-red-700": variant === "destructive",
                         "h-10 px-4 py-2": size === "default",
                         "h-9 rounded-md px-3": size === "sm",
                         "h-11 rounded-md px-8": size === "lg",
