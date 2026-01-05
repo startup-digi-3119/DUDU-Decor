@@ -10,6 +10,7 @@ import Dashboard from './pages/admin/Dashboard'
 import GalleryAdmin from './pages/admin/GalleryAdmin'
 import TeamAdmin from './pages/admin/TeamAdmin'
 import Messages from './pages/admin/Messages'
+import WebsiteSettings from './pages/admin/WebsiteSettings'
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="about" element={<div>About Admin (Coming Soon)</div>} />
           <Route path="team" element={<TeamAdmin />} />
           <Route path="messages" element={<Messages />} />
+          <Route path="settings" element={<WebsiteSettings />} />
         </Route>
       </Routes>
     </Router>

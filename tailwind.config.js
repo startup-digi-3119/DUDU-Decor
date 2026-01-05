@@ -8,26 +8,26 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#6B46C1', // Deep Purple
-          hover: '#553C9A',
+          DEFAULT: '#D4AF37', // Gold
+          hover: '#C5A028',
           foreground: '#FFFFFF',
         },
         secondary: {
-          DEFAULT: '#F3F4F6', // Warm Gray
-          foreground: '#1F2937',
-        },
-        accent: {
-          DEFAULT: '#F59E0B', // Gold
-          hover: '#D97706',
+          DEFAULT: '#0F172A', // Deep Navy
           foreground: '#FFFFFF',
         },
-        background: '#FFFFFF',
-        foreground: '#1F2937', // Dark gray for text
-        muted: '#9CA3AF',
+        accent: {
+          DEFAULT: '#FDFBF7', // Soft Cream
+          foreground: '#0F172A',
+        },
+        background: '#FDFBF7', // Soft Cream
+        foreground: '#0F172A', // Deep Navy
+        muted: '#94A3B8', // Slate 400
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        serif: ['Playfair Display', 'serif'],
+        sans: ['Montserrat', 'sans-serif'],
+        serif: ['Cinzel', 'serif'],
+        script: ['Great Vibes', 'cursive'],
       },
     },
   },

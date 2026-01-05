@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate, Navigate } from 'react-router-dom'
-import { LayoutDashboard, Image, Users, FileText, MessageSquare, LogOut } from 'lucide-react'
+import { LayoutDashboard, Image, Users, FileText, MessageSquare, LogOut, Settings } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { useAuth } from '../hooks/useAuth'
 import { auth } from '../lib/firebase'
@@ -15,6 +15,7 @@ export function AdminLayout() {
         { name: 'About', path: '/admin/about', icon: FileText },
         { name: 'Team', path: '/admin/team', icon: Users },
         { name: 'Messages', path: '/admin/messages', icon: MessageSquare },
+        { name: 'Settings', path: '/admin/settings', icon: Settings },
     ]
 
     const handleLogout = async () => {
